@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  inventoryvuln:
+    build: .
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./appsettings.Example.json:/app/appsettings.json
