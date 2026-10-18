@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:   # menambahkan tombol "Run workflow" manual di tab Actions
 
 permissions:
   contents: read
@@ -66,8 +67,14 @@ jobs:
       - name: Setup Snyk CLI
         uses: snyk/actions/setup@master
 
-      - name: Run Snyk Open Source (SCA)
+      - name: Run Snyk Open Source (SCA) — gate build
         run: snyk test --all-projects --severity-threshold=high || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk Open Source monitor — kirim snapshot ke Snyk Dashboard
+        if: github.ref == 'refs/heads/main'   # cukup monitor dari branch main, bukan tiap PR
+        run: snyk monitor --all-projects
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
