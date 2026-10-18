@@ -52,3 +52,5 @@ Jenkinsfile    Jenkins pipeline stub with severity gate
 Seed version. Planned expansion on request: full CRUD for purchase orders,
 background stock-reconciliation job, GraphQL variant, CycloneDX/SPDX SBOM
 wired into CI, typosquat fixture (see `docs/FINDINGS.md` note).
+
+Testing
