@@ -1,0 +1,65 @@
+name: Snyk Security
+
+# Trigger: jalan otomatis setiap ada push atau pull request ke branch main
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# Izin yang dibutuhkan agar hasil SAST bisa masuk ke tab Security GitHub
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # ============================================
+  # JOB 1 — SCA: scan dependency (package.json)
+  # ============================================
+  snyk-sca:
+    name: SCA - Dependency Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Snyk Open Source (SCA)
+        uses: snyk/actions/node@master
+        continue-on-error: true   # supaya step berikutnya tetap jalan walau ada temuan
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  # ============================================
+  # JOB 2 — SAST: scan source code
+  # ============================================
+  snyk-sast:
+    name: SAST - Code Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Snyk CLI
+        uses: snyk/actions/setup@master
+
+      - name: Run Snyk Code (SAST)
+        run: snyk code test --sarif-file-output=snyk-code.sarif || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Upload result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: snyk-code.sarif
